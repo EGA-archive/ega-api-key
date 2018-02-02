@@ -41,7 +41,7 @@ public class KeyController {
         return keyService.getEncryptionFormats();
     }
     
-    @RequestMapping(value = "/filekeys/{file_stable_id}", method = GET)
+    @RequestMapping(value = "/filekeys/{file_id}", method = GET)
     @ResponseBody
     public String getFileKey(@PathVariable String file_id) {
         return keyService.getFileKey(file_id);

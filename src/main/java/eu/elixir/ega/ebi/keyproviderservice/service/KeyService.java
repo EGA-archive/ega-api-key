@@ -16,15 +16,14 @@
 package eu.elixir.ega.ebi.keyproviderservice.service;
 
 /**
- *
  * @author asenf
  */
 public interface KeyService {
-    
-    public String getFileKey(String fileId);
-    
-    public String[] getEncryptionFormats();
-    
-    public String[] getKeyPath(String key);
-    
+
+    String getFileKey(String fileId);
+
+    String[] getEncryptionFormats();
+
+    String[] getKeyPath(String key);
+
 }

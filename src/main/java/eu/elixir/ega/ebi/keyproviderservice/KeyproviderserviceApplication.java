@@ -34,22 +34,22 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @EnableCircuitBreaker
 @EnableHystrix
 @SpringBootApplication
-@EnableAutoConfiguration(exclude={DataSourceAutoConfiguration.class})
+@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @EnableSwagger2
 @EnableDiscoveryClient
 public class KeyproviderserviceApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(KeyproviderserviceApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(KeyproviderserviceApplication.class, args);
+    }
 
-        @Bean
-        public Docket swaggerSettings() {
-            return new Docket(DocumentationType.SWAGGER_2)
-                    .select()
-                    .apis(RequestHandlerSelectors.any())
-                    .paths(PathSelectors.any())
-                    .build()
-                    .pathMapping("/");
-        }
+    @Bean
+    public Docket swaggerSettings() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .select()
+                .apis(RequestHandlerSelectors.any())
+                .paths(PathSelectors.any())
+                .build()
+                .pathMapping("/");
+    }
 }

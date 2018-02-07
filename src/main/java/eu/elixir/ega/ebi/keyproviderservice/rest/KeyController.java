@@ -17,14 +17,9 @@ package eu.elixir.ega.ebi.keyproviderservice.rest;
 
 import eu.elixir.ega.ebi.keyproviderservice.service.KeyService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
- *
  * @author asenf
  */
 @RestController
@@ -33,23 +28,23 @@ public class KeyController {
 
     @Autowired
     private KeyService keyService;
-    
-    
-    @RequestMapping(value = "/formats", method = GET)
+
+    @GetMapping(value = "/formats")
     @ResponseBody
     public String[] getFormats() {
         return keyService.getEncryptionFormats();
     }
-    
-    @RequestMapping(value = "/filekeys/{file_id}", method = GET)
+
+    @GetMapping(value = "/filekeys/{file_id}")
     @ResponseBody
     public String getFileKey(@PathVariable String file_id) {
         return keyService.getFileKey(file_id);
     }
-    
-    @RequestMapping(value = "/paths/{key}", method = GET)
+
+    @GetMapping(value = "/paths/{key}")
     @ResponseBody
     public String[] getKeyPath(@PathVariable String file_stable_id) {
         return keyService.getKeyPath(file_stable_id);
     }
+
 }

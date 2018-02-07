@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
- *
  * @author asenf
  */
 @Service
@@ -33,26 +32,26 @@ public class KeyServiceImpl implements KeyService {
 
     @Autowired
     private MyCipherConfig myCipherConfig;
-    
+
     @Override
     @HystrixCommand
     @ResponseBody
     public String getFileKey(String fileId) {
-        String key = null;
-        
+        String key;
+
         if (fileId.equalsIgnoreCase("AES") || fileId.equalsIgnoreCase("GPG"))
             key = myCipherConfig.getAESKey(fileId.toUpperCase());
         else {
             // TODO
             // Get Key for File ID from source
-            
+
             // Until then: Use the same key as a patch
             key = myCipherConfig.getAESKey("AES");
         }
-        
+
         return key;
     }
-    
+
     // Downstream Helper Function - List supported ReEncryption Formats
     public String[] getEncryptionFormats() {
         return myCipherConfig.getAllKeys();

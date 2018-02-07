@@ -22,13 +22,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
 /**
- *
  * @author asenf
  */
 @Configuration
 public class MyConfiguration {
-    @Value("${ega.ebi.cipherConfig}") String cipherConfigPath;
-        
+
+    @Value("${ega.ebi.cipherConfig}")
+    private String cipherConfigPath;
+
     @Bean
     public MyCipherConfig MyCipherConfig() {
         return new MyCipherConfig(cipherConfigPath);
@@ -39,5 +40,5 @@ public class MyConfiguration {
     RestTemplate restTemplate() {
         return new RestTemplate();
     }
-    
+
 }

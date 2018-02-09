@@ -15,10 +15,18 @@
  */
 package eu.elixir.ega.ebi.keyproviderservice;
 
+import com.google.common.cache.CacheBuilder;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.guava.GuavaCache;
+import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.netflix.hystrix.EnableHystrix;
@@ -30,12 +38,20 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-@Configuration
+//@Configuration
+//@EnableCircuitBreaker
+//@EnableHystrix
+//@SpringBootApplication
+//@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
+//@EnableSwagger2
+//@EnableDiscoveryClient
+
+// Switch to DB Access
+@SpringBootApplication
+@EnableCaching
+@EnableSwagger2
 @EnableCircuitBreaker
 @EnableHystrix
-@SpringBootApplication
-@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
-@EnableSwagger2
 @EnableDiscoveryClient
 public class KeyproviderserviceApplication {
 
@@ -52,4 +68,15 @@ public class KeyproviderserviceApplication {
                 .build()
                 .pathMapping("/");
     }
+
+        @Bean
+        public CacheManager cacheManager() {
+            SimpleCacheManager simpleCacheManager = new SimpleCacheManager();
+            GuavaCache byFileId = new GuavaCache("byFileId", CacheBuilder.newBuilder()
+                    .expireAfterAccess(24, TimeUnit.HOURS)
+                    .build());
+
+            simpleCacheManager.setCaches(Arrays.asList(byFileId));
+            return simpleCacheManager;
+        }
 }

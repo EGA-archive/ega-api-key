@@ -17,7 +17,10 @@ package eu.elixir.ega.ebi.keyproviderservice.service.internal;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.elixir.ega.ebi.keyproviderservice.config.MyCipherConfig;
+import eu.elixir.ega.ebi.keyproviderservice.domain.entity.FileKey;
+import eu.elixir.ega.ebi.keyproviderservice.domain.repository.FileKeyRepository;
 import eu.elixir.ega.ebi.keyproviderservice.service.KeyService;
+import java.util.Iterator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.stereotype.Service;
@@ -33,12 +36,15 @@ public class KeyServiceImpl implements KeyService {
     @Autowired
     private MyCipherConfig myCipherConfig;
 
+    @Autowired
+    private FileKeyRepository fileKeyRepository;
+    
     @Override
     @HystrixCommand
     @ResponseBody
     public String getFileKey(String fileId) {
-        String key;
-
+        String key = null;
+/*
         if (fileId.equalsIgnoreCase("AES") || fileId.equalsIgnoreCase("GPG"))
             key = myCipherConfig.getAESKey(fileId.toUpperCase());
         else {
@@ -48,7 +54,14 @@ public class KeyServiceImpl implements KeyService {
             // Until then: Use the same key as a patch
             key = myCipherConfig.getAESKey("AES");
         }
-
+*/
+        Iterable<FileKey> findByFileId = fileKeyRepository.findByFileId(fileId);
+        Iterator<FileKey> iterator = findByFileId.iterator();
+        if (iterator.hasNext()) {
+            FileKey next = iterator.next();
+            key = next.getEncryptionKey();
+        }
+        
         return key;
     }
 

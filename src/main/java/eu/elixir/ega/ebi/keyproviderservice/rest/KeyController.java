@@ -41,7 +41,7 @@ public class KeyController {
         return keyService.getFileKey(file_id);
     }
 
-    @GetMapping(value = "/paths/{key}")
+    @GetMapping(value = "/paths/{file_stable_id}")
     @ResponseBody
     public String[] getKeyPath(@PathVariable String file_stable_id) {
         return keyService.getKeyPath(file_stable_id);

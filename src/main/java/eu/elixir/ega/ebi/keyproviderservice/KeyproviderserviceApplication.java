@@ -49,7 +49,6 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 // Switch to DB Access
 @SpringBootApplication
 @EnableCaching
-@EnableSwagger2
 @EnableCircuitBreaker
 @EnableHystrix
 @EnableDiscoveryClient
@@ -57,16 +56,6 @@ public class KeyproviderserviceApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(KeyproviderserviceApplication.class, args);
-    }
-
-    @Bean
-    public Docket swaggerSettings() {
-        return new Docket(DocumentationType.SWAGGER_2)
-                .select()
-                .apis(RequestHandlerSelectors.any())
-                .paths(PathSelectors.any())
-                .build()
-                .pathMapping("/");
     }
 
         @Bean

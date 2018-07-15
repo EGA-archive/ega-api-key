@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 ELIXIR EGA
+ * Copyright 2018 ELIXIR EGA
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,228 +15,165 @@
  */
 package eu.elixir.ega.ebi.keyproviderservice.config;
 
-import com.google.common.io.Files;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import eu.elixir.ega.ebi.keyproviderservice.dto.KeyPath;
+import eu.elixir.ega.ebi.keyproviderservice.dto.PublicKey;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import org.bouncycastle.openpgp.*;
-import org.bouncycastle.openpgp.operator.KeyFingerPrintCalculator;
-import org.bouncycastle.openpgp.operator.bc.BcKeyFingerprintCalculator;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.security.Security;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.bouncycastle.bcpg.ArmoredInputStream;
+import org.bouncycastle.openpgp.operator.PBESecretKeyDecryptor;
+import org.bouncycastle.openpgp.operator.PGPDigestCalculatorProvider;
+import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator;
+import org.bouncycastle.openpgp.operator.jcajce.JcaPGPDigestCalculatorProviderBuilder;
+import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyDecryptorBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * @author asenf
  */
 public class MyCipherConfig {
+    
+    @Autowired
+    private RestTemplate restTemplate;
 
-    // Encryption/Decryption Keys
-    private static HashMap<String, String[]> keys = new HashMap<>(); // Tag->Key Location
-    private static HashMap<String, PGPPublicKey> gpgpublickeys = new HashMap<>(); // For mirroring
+    // Actual Key objects (not sure if this is necessary)
+    private HashMap<Long, PGPPrivateKey>  pgpPriv;
+    
+    // Paths
+    private HashMap<Long, KeyPath> keyPaths;
+    
+    // Public Key URL
+    // https://github.com/mailvelope/keyserver/blob/master/README.md
+    private String publicKeyUrl;
+    
+    // Load (1) Private Key
+    public MyCipherConfig(String[] keyPath, String[] keyPassPath, String publicKeyUrl) {
+        this.publicKeyUrl = publicKeyUrl;
+        
+        if (keyPath==null) return;
+        
+        // Instantiate Data Structures
+        pgpPriv = new HashMap<>();
+        keyPaths = new HashMap<>();
 
-    // Updated BC libraries
-    private static KeyFingerPrintCalculator fingerPrintCalculater = new BcKeyFingerprintCalculator();
-
-    public MyCipherConfig(String cipherConfigPath) {
-        HashMap<String, ArrayList<String>> gpgconfig = readGpgXML(new File(cipherConfigPath));
-        keys = new HashMap<>();
-
-        Set<String> keySet = gpgconfig.keySet();
-        Iterator<String> iter = keySet.iterator();
-        while (iter.hasNext()) {
-            String tag = iter.next(); // "AES" or "SymmetricGPG" or "PrivateGPG_{org}" or "PublicGPG_{org}"
-            String[] vals = gpgconfig.get(tag).toArray(new String[gpgconfig.get(tag).size()]);
-            keys.put(tag, vals);
-
-            if (tag.toLowerCase().startsWith("publicgpg_")) {
-                String organization = tag.substring(tag.indexOf('_') + 1).trim();
-
-                try { // Attempt to read the key, and put it in hash table
-                    PGPPublicKey key = getKey(organization, vals); // vals[0] = path, [1][2] n/a
-                    gpgpublickeys.put(organization, key);
-                    gpgpublickeys.put(tag, key); // "backup"
-                } catch (IOException ex) {
-                }
+        // Get Key ID and store both Key paths and Key objects in a Hash Map
+        for (int i=0; i< keyPath.length; i++) {
+            try {
+                PGPPrivateKey pgpPriv_ = extractKey(readFileAsString(keyPath[i]), readFileAsString(keyPassPath[i]));
+                long keyId = pgpPriv_.getKeyID();
+                pgpPriv.put(keyId, pgpPriv_);
+                keyPaths.put(keyId, new KeyPath(keyPath[i], keyPassPath[i]));
+            } catch (IOException ex) {
+                Logger.getLogger(MyCipherConfig.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-    }
-
-    public HashMap<String, ArrayList<String>> readGpgXML(File xmlFile) {
-        HashMap<String, ArrayList<String>> resources_temp = new HashMap<>();
-
-        try {
-
-            DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-            Document doc = docBuilder.parse(xmlFile);
-            doc.getDocumentElement().normalize();
-            NodeList listOfKeys = doc.getElementsByTagName("Key");
-            for (int s = 0; s < listOfKeys.getLength(); s++) {
-                Node nNode = listOfKeys.item(s);
-
-                if (nNode.getNodeType() == Node.ELEMENT_NODE) {
-                    Element eElement = (Element) nNode;
-
-                    String type = eElement.getElementsByTagName("Type").item(0).getTextContent();
-
-                    // Add server type to local HashMap, if not already present
-                    if (!resources_temp.containsKey(type))
-                        resources_temp.put(type, new ArrayList<>());
-
-                    // Add server to list for that type
-                    String keyPath = eElement.getElementsByTagName("KeyPath").item(0).getTextContent();
-                    String keyFile = eElement.getElementsByTagName("KeyFile").item(0).getTextContent();
-                    String keyKey = eElement.getElementsByTagName("KeyKey").item(0).getTextContent();
-
-                    resources_temp.get(type).add(keyPath);
-                    resources_temp.get(type).add(keyFile);
-                    resources_temp.get(type).add(keyKey);
-                }
-            }
-
-        } catch (ParserConfigurationException | org.xml.sax.SAXException | IOException ex) {
-        }
-        return resources_temp;
     }
 
     /*
-     * *************************************************************************
-     * Helper Functions to perform Database Queries and set up Cache Structures
-     * *************************************************************************
+     * Accessors - Private Key, and Paths - Used by REST endpoint
      */
-
-    public String[] getAllKeys() {
-        Set<String> keySet = keys.keySet();
-        return keySet.toArray(new String[keySet.size()]);
-    }
-
-    public String[] getKeyPath(String tag) {
-        return keys.get(tag);
-    }
-
-    // -------------------------------------------------------------------------
-
-    public PGPPublicKey getKey(String organization, String[] vals) throws IOException {
-        PGPPublicKey pgKey = null;
-        Security.addProvider(new BouncyCastleProvider());
-
-        // Paths (file containing the key - no paswords for public GPG Keys)
-        String path = vals[0];
-        InputStream in = new FileInputStream(path);
-
-        if (organization.toLowerCase().contains("ebi")) { // "pubring.gpg"
-            try {
-                pgKey = readPublicKey(in);
-            } catch (IOException | PGPException ignored) {
-                ;
-            }
-        } else { //if (organization.toLowerCase().contains("crg")) { // "/exported.gpg"
-            try {
-                pgKey = getEncryptionKey(getKeyring(in));
-            } catch (IOException ignored) {
-                ;
-            }
-        }
-        in.close();
-
-        return pgKey;
-    }
-
-    private static PGPPublicKey readPublicKey(InputStream in) throws IOException, PGPException {
-        in = PGPUtil.getDecoderStream(in);
-
-        PGPPublicKeyRingCollection pgpPub = new PGPPublicKeyRingCollection(in, fingerPrintCalculater);
-
-        //
-        // we just loop through the collection till we find a key suitable for encryption, in the real
-        // world you would probably want to be a bit smarter about this.
-        //
+    public PGPPrivateKey getPrivateKey(Long keyId) {
+        return this.pgpPriv.get(keyId);
+    }   
+    public PGPPublicKey getPublicKey(Long keyId) {
         PGPPublicKey key = null;
+        try {
+            key = new PGPPublicKey(this.pgpPriv.get(keyId).getPublicKeyPacket(), new JcaKeyFingerprintCalculator());
+        } catch (PGPException ex) {
+            Logger.getLogger(MyCipherConfig.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return key;
+    }
+    
+    public KeyPath getKeyPaths(Long keyId) {
+        return this.keyPaths.get(keyId);
+    }
+    
+    public Set<Long> getKeyIDs() {
+        return this.pgpPriv.keySet();
+    }
+    
+    // https://github.com/mailvelope/keyserver/blob/master/README.md
+    public String getPublicKeyById(String id) {
+        ResponseEntity<PublicKey> publicKey = restTemplate.getForEntity(this.publicKeyUrl + "?id=" + id, PublicKey.class);
+        return publicKey.getBody().getPublicKeyArmored();
+    }
 
-        //
-        // iterate through the key rings.
-        //
-        Iterator rIt = pgpPub.getKeyRings();
+    // https://github.com/mailvelope/keyserver/blob/master/README.md
+    public String getPublicKeyByEmail(String email) {
+        ResponseEntity<PublicKey> publicKey = restTemplate.getForEntity(this.publicKeyUrl + "?email=" + email, PublicKey.class);
+        return publicKey.getBody().getPublicKeyArmored();
+    }
+    
+    /*
+     * Utility Functions
+     */
+    public PGPPrivateKey extractKey(String sKey, String sPass) {
+        PGPPrivateKey key = null;
+        
+        try {
+            PGPSecretKey secretKey = getSecretKey(sKey);
 
-        while (key == null && rIt.hasNext()) {
-            PGPPublicKeyRing kRing = (PGPPublicKeyRing) rIt.next();
-            Iterator kIt = kRing.getPublicKeys();
-            boolean encryptionKeyFound = false;
+            // Extract Private Key from Secret Key
+            PGPDigestCalculatorProvider digestCalc = new JcaPGPDigestCalculatorProviderBuilder().build();
+            PBESecretKeyDecryptor decryptor = new JcePBESecretKeyDecryptorBuilder(digestCalc)
+                .build(sPass.toCharArray());
 
-            while (key == null && kIt.hasNext()) {
-                PGPPublicKey k = (PGPPublicKey) kIt.next();
+            key = secretKey.extractPrivateKey(decryptor);
+        } catch (IOException | PGPException ex) {
+            System.out.println(ex.toString());
+        }
+        
+        return key;
+    }
+    
+    // Return the contents of a file as String
+    public String readFileAsString(String filePath) throws java.io.IOException{
+        StringBuffer fileData = new StringBuffer(1000);
+        BufferedReader reader = new BufferedReader(new FileReader(filePath));
+        char[] buf = new char[1024];
+        int numRead=0;
+        while((numRead=reader.read(buf)) != -1){
+            String readData = String.valueOf(buf, 0, numRead);
+            fileData.append(readData);
+            buf = new char[1024];
+        }
+        reader.close();
+        return fileData.toString();
+    }
+    
+    /*
+     * Helper Functins
+     */
+    // Extract Secret Key from File
+    private PGPSecretKey getSecretKey(String privateKeyData) throws IOException, PGPException {
+        PGPPrivateKey privKey = null;
+        try (InputStream privStream = new ArmoredInputStream(new ByteArrayInputStream(privateKeyData.getBytes("UTF-8")))) {
+            PGPSecretKeyRingCollection pgpSec = new PGPSecretKeyRingCollection(PGPUtil.getDecoderStream(privStream), new JcaKeyFingerprintCalculator());
+            Iterator keyRingIter = pgpSec.getKeyRings();
+            while (keyRingIter.hasNext()) {
+                PGPSecretKeyRing keyRing = (PGPSecretKeyRing)keyRingIter.next();
+                Iterator keyIter = keyRing.getSecretKeys();
+                while (keyIter.hasNext()) {
+                    PGPSecretKey key = (PGPSecretKey)keyIter.next();
 
-                if (k.isEncryptionKey()) {
-                    key = k;
+                    if (key.isSigningKey()) {
+                        return key;
+                    }
                 }
             }
         }
-
-        if (key == null) {
-            throw new IllegalArgumentException("Can't find encryption key in key ring.");
-        }
-
-        return key;
-    }
-
-    // -------------------------------------------------------------------------
-    // -------------------------------------------------------------------------
-    private PGPPublicKeyRing getKeyring(InputStream keyBlockStream) throws IOException {
-        // PGPUtil.getDecoderStream() will detect ASCII-armor automatically and decode it,
-        // the PGPObject factory then knows how to read all the data in the encoded stream
-        PGPObjectFactory factory = new PGPObjectFactory(PGPUtil.getDecoderStream(keyBlockStream), fingerPrintCalculater);
-
-        // these files should really just have one object in them,
-        // and that object should be a PGPPublicKeyRing.
-        Object o = factory.nextObject();
-        if (o instanceof PGPPublicKeyRing) {
-            return (PGPPublicKeyRing) o;
-        }
-        throw new IllegalArgumentException("Input text does not contain a PGP Public Key");
-    }
-
-    private PGPPublicKey getEncryptionKey(PGPPublicKeyRing keyRing) {
-        if (keyRing == null)
-            return null;
-
-        // iterate over the keys on the ring, look for one
-        // which is suitable for encryption.
-        Iterator keys = keyRing.getPublicKeys();
-        PGPPublicKey key;
-        while (keys.hasNext()) {
-            key = (PGPPublicKey) keys.next();
-            if (key.isEncryptionKey()) {
-                return key;
-            }
-        }
-        return null;
-    }
-
-    public String getAESKey(String key) {
-        String encryptionKeyPath = getKeyPath(key)[0];
-        String encryptionKey = null;
-        try {
-            encryptionKey = Files.readFirstLine(new File(encryptionKeyPath), Charset.defaultCharset());
-        } catch (IOException ex) {
-            Logger.getLogger(MyCipherConfig.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return encryptionKey;
+        throw new IllegalArgumentException("Can't find signing key in key ring.");
     }
 
 }

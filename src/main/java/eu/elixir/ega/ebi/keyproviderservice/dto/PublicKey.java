@@ -1,5 +1,5 @@
-/* 
- * Copyright 2017 ELIXIR EGA
+/*
+ * Copyright 2018 ELIXIR EGA
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * Author:  asenf
- * Created: 17-Feb-2017
- */
+package eu.elixir.ega.ebi.keyproviderservice.dto;
 
-CREATE TABLE file_key_test.key_format_cv (
-	key_format varchar(128) NOT NULL,
-	is_current bool NOT NULL DEFAULT false,
-	CONSTRAINT key_format_cv_pkey PRIMARY KEY (key_format)
-)
-WITH (
-	OIDS=FALSE
-);
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ *
+ * @author asenf
+ */
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
+@Getter
+public class PublicKey {
+
+    String keyId;
+    String fingerprint;
+    UserId[] userIds;
+    String created;
+    String algorithm;
+    String keySize;
+    String publicKeyArmored;
+    
+}

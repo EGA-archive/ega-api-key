@@ -15,7 +15,11 @@
  */
 package eu.elixir.ega.ebi.keyproviderservice.rest;
 
+import eu.elixir.ega.ebi.keyproviderservice.dto.KeyPath;
 import eu.elixir.ega.ebi.keyproviderservice.service.KeyService;
+import java.util.Set;
+import org.bouncycastle.openpgp.PGPPrivateKey;
+import org.bouncycastle.openpgp.PGPPublicKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,22 +33,44 @@ public class KeyController {
     @Autowired
     private KeyService keyService;
 
-    @GetMapping(value = "/formats")
-    @ResponseBody
-    public String[] getFormats() {
-        return keyService.getEncryptionFormats();
-    }
-
     @GetMapping(value = "/filekeys/{file_id}")
     @ResponseBody
     public String getFileKey(@PathVariable String file_id) {
         return keyService.getFileKey(file_id);
     }
 
-    @GetMapping(value = "/paths/{file_stable_id}")
+    @GetMapping(value = "/retrieve/{key_type}/{key_id}/public/user")
     @ResponseBody
-    public String[] getKeyPath(@PathVariable String file_stable_id) {
-        return keyService.getKeyPath(file_stable_id);
+    public String getPublicKey(@PathVariable String key_type, 
+                               @PathVariable String key_id) {
+        return keyService.getPublicKey(key_type, key_id);
     }
 
+    @GetMapping(value = "/retrieve/{key_type}/{key_id}/public")
+    @ResponseBody
+    public PGPPublicKey getPublicKeyFromPrivate(@PathVariable String key_type, 
+                                                @PathVariable String key_id) {
+        return keyService.getPublicKeyFromPrivate(key_type, key_id);
+    }
+    
+    @GetMapping(value = "/retrieve/{key_type}/{key_id}/private")
+    @ResponseBody
+    public PGPPrivateKey getPrivateKey(@PathVariable String key_type, 
+                                       @PathVariable String key_id) {
+        return keyService.getPrivateKey(key_type, key_id);
+    }
+    
+    @GetMapping(value = "/retrieve/{key_type}/{key_id}/private/path")
+    @ResponseBody
+    public KeyPath getPrivateKeyPath(@PathVariable String key_type, 
+                                     @PathVariable String key_id) {
+        return keyService.getPrivateKeyPath(key_type, key_id);
+    }
+
+    @GetMapping(value = "/retrieve/{key_type}/ids")
+    @ResponseBody
+    public Set<Long> getPublicKey(@PathVariable String key_type) {
+        return keyService.getKeyIDs(key_type);
+    }
+    
 }

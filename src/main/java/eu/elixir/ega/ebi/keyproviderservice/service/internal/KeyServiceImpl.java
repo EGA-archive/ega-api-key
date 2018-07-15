@@ -17,10 +17,13 @@ package eu.elixir.ega.ebi.keyproviderservice.service.internal;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.elixir.ega.ebi.keyproviderservice.config.MyCipherConfig;
-import eu.elixir.ega.ebi.keyproviderservice.domain.entity.FileKey;
-import eu.elixir.ega.ebi.keyproviderservice.domain.repository.FileKeyRepository;
+import eu.elixir.ega.ebi.keyproviderservice.domain.entity.EncryptionKey;
+import eu.elixir.ega.ebi.keyproviderservice.domain.repository.EncryptionKeyRepository;
+import eu.elixir.ega.ebi.keyproviderservice.dto.KeyPath;
 import eu.elixir.ega.ebi.keyproviderservice.service.KeyService;
-import java.util.Iterator;
+import java.util.Set;
+import org.bouncycastle.openpgp.PGPPrivateKey;
+import org.bouncycastle.openpgp.PGPPublicKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.stereotype.Service;
@@ -34,44 +37,65 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class KeyServiceImpl implements KeyService {
 
     @Autowired
-    private MyCipherConfig myCipherConfig;
+    private MyCipherConfig myCipherConfig; // Private GPG Key(s)
 
     @Autowired
-    private FileKeyRepository fileKeyRepository;
+    private EncryptionKeyRepository encryptionKeyRepository; // Per-File AES Keys
+
+    @Override
+    @HystrixCommand
+    @ResponseBody
+    public String getFileKey(String id) {
+        String key = null;
+        
+        EncryptionKey findById = encryptionKeyRepository.findById(id);
+        key = findById.getEncryptionKey();
+        
+        return key;
+    }
     
     @Override
     @HystrixCommand
     @ResponseBody
-    public String getFileKey(String fileId) {
-        String key = null;
-/*
-        if (fileId.equalsIgnoreCase("AES") || fileId.equalsIgnoreCase("GPG"))
-            key = myCipherConfig.getAESKey(fileId.toUpperCase());
-        else {
-            // TODO
-            // Get Key for File ID from source
-
-            // Until then: Use the same key as a patch
-            key = myCipherConfig.getAESKey("AES");
-        }
-*/
-        Iterable<FileKey> findByFileId = fileKeyRepository.findByFileId(fileId);
-        Iterator<FileKey> iterator = findByFileId.iterator();
-        if (iterator.hasNext()) {
-            FileKey next = iterator.next();
-            key = next.getEncryptionKey();
-        }
-        
-        return key;
+    public PGPPrivateKey getPrivateKey(String keyType, String keyId) {
+        long lKeyId = Long.parseLong(keyId);     
+        return myCipherConfig.getPrivateKey(lKeyId);
     }
-
-    // Downstream Helper Function - List supported ReEncryption Formats
-    public String[] getEncryptionFormats() {
-        return myCipherConfig.getAllKeys();
+    
+    @Override
+    @HystrixCommand
+    @ResponseBody
+    public KeyPath getPrivateKeyPath(String keyType, String keyId) {
+        long lKeyId = Long.parseLong(keyId);
+        
+        return myCipherConfig.getKeyPaths(lKeyId);
     }
 
     @Override
-    public String[] getKeyPath(String key) {
-        return myCipherConfig.getKeyPath(key);
+    @HystrixCommand
+    @ResponseBody
+    public String getPublicKey(String keyType, String keyId) {
+        if (keyType.equalsIgnoreCase("id")) {
+            return myCipherConfig.getPublicKeyById(keyId);
+        } else if (keyType.equalsIgnoreCase("email")) {
+            return myCipherConfig.getPublicKeyByEmail(keyId);
+        }
+        
+        return null;
     }
+
+    @Override
+    @HystrixCommand
+    @ResponseBody
+    public PGPPublicKey getPublicKeyFromPrivate(String keyType, String keyId) {
+        return myCipherConfig.getPublicKey(Long.parseLong(keyId));
+    }
+
+    @Override
+    @HystrixCommand
+    @ResponseBody
+    public Set<Long> getKeyIDs(String key_type) {
+        return this.myCipherConfig.getKeyIDs();
+    }
+
 }

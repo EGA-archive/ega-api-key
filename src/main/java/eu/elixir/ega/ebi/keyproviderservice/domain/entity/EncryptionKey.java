@@ -18,12 +18,16 @@ package eu.elixir.ega.ebi.keyproviderservice.domain.entity;
 import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Type;
 
 /**
  *
@@ -34,14 +38,19 @@ import lombok.Setter;
 @Setter
 @Getter
 @Entity
-public class FileKey implements Serializable {
+public class EncryptionKey implements Serializable {
 
         @Id
-        @Size(max=15)
-        @Column(name = "file_id", insertable = false, updatable = false, length=128)
-        private String fileId;
-
-        @Size(max=256)
+        @Column(name = "encryption_key_id", insertable = false, updatable = false)
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Integer id;
+        
+        @Size(max=128)
+        @Column(name = "alias", insertable = false, updatable = false, length=256)
+	private String alias;
+        
+        @Lob
+        @Type(type = "org.hibernate.type.TextType")
         @Column(name = "encryption_key", insertable = false, updatable = false, length=256)
 	private String encryptionKey;
         

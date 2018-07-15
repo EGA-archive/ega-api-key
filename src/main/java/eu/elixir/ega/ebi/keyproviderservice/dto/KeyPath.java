@@ -1,5 +1,5 @@
-/* 
- * Copyright 2017 ELIXIR EGA
+/*
+ * Copyright 2018 ELIXIR EGA
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package eu.elixir.ega.ebi.keyproviderservice.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 /**
- * Author:  asenf
- * Created: 17-Feb-2017
+ *
+ * @author asenf
  */
-
-CREATE TABLE file_key_test.file_key (
-	file_id varchar(15) NOT NULL,
-	encryption_key varchar(256) NOT NULL,
-	key_format varchar(128) NULL,
-	CONSTRAINT file_key_pkey PRIMARY KEY (file_id),
-	CONSTRAINT file_key_key_format_fk FOREIGN KEY (key_format) REFERENCES file_key_test.key_format_cv(key_format)
-)
-WITH (
-	OIDS=FALSE
-);
-
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
+@Getter
+public class KeyPath {
+    private String keyPath;
+    private String keyPassPath;
+}

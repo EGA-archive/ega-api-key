@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.elixir.ega.ebi.keyproviderservice.service;
+package eu.elixir.ega.ebi.keyproviderservice.domain.repository;
 
-import eu.elixir.ega.ebi.keyproviderservice.dto.KeyPath;
-import java.util.Set;
-import org.bouncycastle.openpgp.PGPPrivateKey;
-import org.bouncycastle.openpgp.PGPPublicKey;
+import eu.elixir.ega.ebi.keyproviderservice.domain.entity.EncryptionKey;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 
 /**
+ *
  * @author asenf
  */
-public interface KeyService {
-
-    String getFileKey(String fileId);
-
-    PGPPrivateKey getPrivateKey(String keyType, String keyId);
-    KeyPath getPrivateKeyPath(String keyType, String keyId);
-
-    PGPPublicKey getPublicKeyFromPrivate(String keyType, String keyId);
-    String getPublicKey(String keyType, String keyId);
-
-    Set<Long> getKeyIDs(String key_type);
+public interface EncryptionKeyRepository extends CrudRepository<EncryptionKey, Integer> {
+    
+    @Cacheable(cacheNames="byId")
+    public EncryptionKey findById(@Param("id") String id);
+    
 }
+ 

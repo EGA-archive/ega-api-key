@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package eu.elixir.ega.ebi.keyproviderservice.service;
+package eu.elixir.ega.ebi.keyproviderservice.dto;
 
-import eu.elixir.ega.ebi.keyproviderservice.dto.KeyPath;
-import java.util.Set;
-import org.bouncycastle.openpgp.PGPPrivateKey;
-import org.bouncycastle.openpgp.PGPPublicKey;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
+ *
  * @author asenf
  */
-public interface KeyService {
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
+@Getter
+public class UserId {
 
-    String getFileKey(String fileId);
-
-    PGPPrivateKey getPrivateKey(String keyType, String keyId);
-    KeyPath getPrivateKeyPath(String keyType, String keyId);
-
-    PGPPublicKey getPublicKeyFromPrivate(String keyType, String keyId);
-    String getPublicKey(String keyType, String keyId);
-
-    Set<Long> getKeyIDs(String key_type);
+    private String name;
+    private String email;
+    private String verified;
+    
 }

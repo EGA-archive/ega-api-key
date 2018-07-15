@@ -16,7 +16,6 @@
 package eu.elixir.ega.ebi.keyproviderservice.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
@@ -27,16 +26,19 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class MyConfiguration {
 
-    @Value("${ega.ebi.cipherConfig}")
-    private String cipherConfigPath;
+    @Value("${ega.key.path}")
+    private String[] cipherKeyPath;
+    @Value("${ega.keypass.path}")
+    private String[] cipherKeyPassPath;
+    @Value("${ega.publickeypass.url}")
+    private String publicKeyUrl;
 
     @Bean
     public MyCipherConfig MyCipherConfig() {
-        return new MyCipherConfig(cipherConfigPath);
+        return new MyCipherConfig(cipherKeyPath, cipherKeyPassPath, publicKeyUrl);
     }
 
     @Bean
-    @LoadBalanced
     RestTemplate restTemplate() {
         return new RestTemplate();
     }

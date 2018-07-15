@@ -1,0 +1,34 @@
+#
+# Monit control file
+#
+
+set daemon 30 # Poll at 1/2-minute intervals
+set logfile /monitapi.log
+set idfile /tmp/id
+set statefile /tmp/state
+set httpd port 8103
+   allow ega:egalocal
+   
+check system local
+   if loadavg (1min) > 6 then alert
+   if loadavg (5min) > 4 then alert
+   if memory usage > 75% then alert
+   if cpu usage (system) > 85% then alert
+
+check network eth0
+   with interface "ens3"
+   if failed link for 4 times within 5 cycles then alert
+   if changed link capacity then alert
+   if saturation > 50% then alert
+   if total download > 1000 GB in last 2 hours then alert
+
+#
+# Process
+#
+
+check process keyd_docker with matching "/key-provider-service-0.0.1-SNAPSHOT.jar"
+   group service_process
+   start program = "/etc/keyd.sh start"
+   stop program = "/etc/keyd.sh stop"
+   if not exist then start
+ 

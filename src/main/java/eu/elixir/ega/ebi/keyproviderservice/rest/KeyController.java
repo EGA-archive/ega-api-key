@@ -17,11 +17,12 @@ package eu.elixir.ega.ebi.keyproviderservice.rest;
 
 import eu.elixir.ega.ebi.keyproviderservice.dto.KeyPath;
 import eu.elixir.ega.ebi.keyproviderservice.service.KeyService;
-import java.util.Set;
 import org.bouncycastle.openpgp.PGPPrivateKey;
 import org.bouncycastle.openpgp.PGPPublicKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Set;
 
 /**
  * @author asenf
@@ -33,44 +34,40 @@ public class KeyController {
     @Autowired
     private KeyService keyService;
 
-    @GetMapping(value = "/filekeys/{file_id}")
+    @GetMapping(value = "/filekeys/{fileId}")
     @ResponseBody
-    public String getFileKey(@PathVariable String file_id) {
-        return keyService.getFileKey(file_id);
+    public String getFileKey(@PathVariable String fileId) {
+        return keyService.getFileKey(fileId);
     }
 
-    @GetMapping(value = "/retrieve/{key_type}/{key_id}/public/user")
+    @GetMapping(value = "/retrieve/{keyType}/{keyId}/public/user")
     @ResponseBody
-    public String getPublicKey(@PathVariable String key_type, 
-                               @PathVariable String key_id) {
-        return keyService.getPublicKey(key_type, key_id);
+    public String getPublicKey(@PathVariable String keyType, @PathVariable String keyId) {
+        return keyService.getPublicKey(keyType, keyId);
     }
 
-    @GetMapping(value = "/retrieve/{key_type}/{key_id}/public")
+    @GetMapping(value = "/retrieve/{keyType}/{keyId}/public")
     @ResponseBody
-    public PGPPublicKey getPublicKeyFromPrivate(@PathVariable String key_type, 
-                                                @PathVariable String key_id) {
-        return keyService.getPublicKeyFromPrivate(key_type, key_id);
-    }
-    
-    @GetMapping(value = "/retrieve/{key_type}/{key_id}/private")
-    @ResponseBody
-    public PGPPrivateKey getPrivateKey(@PathVariable String key_type, 
-                                       @PathVariable String key_id) {
-        return keyService.getPrivateKey(key_type, key_id);
-    }
-    
-    @GetMapping(value = "/retrieve/{key_type}/{key_id}/private/path")
-    @ResponseBody
-    public KeyPath getPrivateKeyPath(@PathVariable String key_type, 
-                                     @PathVariable String key_id) {
-        return keyService.getPrivateKeyPath(key_type, key_id);
+    public PGPPublicKey getPublicKeyFromPrivate(@PathVariable String keyType, @PathVariable String keyId) {
+        return keyService.getPublicKeyFromPrivate(keyType, keyId);
     }
 
-    @GetMapping(value = "/retrieve/{key_type}/ids")
+    @GetMapping(value = "/retrieve/{keyType}/{keyId}/private")
     @ResponseBody
-    public Set<Long> getPublicKey(@PathVariable String key_type) {
-        return keyService.getKeyIDs(key_type);
+    public PGPPrivateKey getPrivateKey(@PathVariable String keyType, @PathVariable String keyId) {
+        return keyService.getPrivateKey(keyType, keyId);
     }
-    
+
+    @GetMapping(value = "/retrieve/{keyType}/{keyId}/private/path")
+    @ResponseBody
+    public KeyPath getPrivateKeyPath(@PathVariable String keyType, @PathVariable String keyId) {
+        return keyService.getPrivateKeyPath(keyType, keyId);
+    }
+
+    @GetMapping(value = "/retrieve/{keyType}/ids")
+    @ResponseBody
+    public Set<Long> getPublicKey(@PathVariable String keyType) {
+        return keyService.getKeyIDs(keyType);
+    }
+
 }

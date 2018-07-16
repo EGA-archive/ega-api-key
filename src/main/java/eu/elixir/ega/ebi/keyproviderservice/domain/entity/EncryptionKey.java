@@ -15,22 +15,17 @@
  */
 package eu.elixir.ega.ebi.keyproviderservice.domain.entity;
 
-import java.io.Serializable;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Type;
 
+import javax.persistence.*;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+
 /**
- *
  * @author asenf
  */
 @NoArgsConstructor
@@ -40,21 +35,22 @@ import org.hibernate.annotations.Type;
 @Entity
 public class EncryptionKey implements Serializable {
 
-        @Id
-        @Column(name = "encryption_key_id", insertable = false, updatable = false)
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Integer id;
-        
-        @Size(max=128)
-        @Column(name = "alias", insertable = false, updatable = false, length=256)
-	private String alias;
-        
-        @Lob
-        @Type(type = "org.hibernate.type.TextType")
-        @Column(name = "encryption_key", insertable = false, updatable = false, length=256)
-	private String encryptionKey;
-        
-        @Size(max=128)
-        @Column(name = "key_format", insertable = false, updatable = false, length=256)
-	private String key_format;
+    @Id
+    @Column(name = "encryption_key_id", insertable = false, updatable = false)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Size(max = 128)
+    @Column(name = "alias", insertable = false, updatable = false, length = 256)
+    private String alias;
+
+    @Lob
+    @Type(type = "org.hibernate.type.TextType")
+    @Column(name = "encryption_key", insertable = false, updatable = false, length = 256)
+    private String encryptionKey;
+
+    @Size(max = 128)
+    @Column(name = "key_format", insertable = false, updatable = false, length = 256)
+    private String keyFormat;
+
 }

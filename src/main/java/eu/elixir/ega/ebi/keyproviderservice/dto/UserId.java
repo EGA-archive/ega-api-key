@@ -21,7 +21,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- *
  * @author asenf
  */
 @NoArgsConstructor
@@ -33,5 +32,5 @@ public class UserId {
     private String name;
     private String email;
     private String verified;
-    
+
 }

@@ -30,12 +30,20 @@ public class MyConfiguration {
     private String[] cipherKeyPath;
     @Value("${ega.keypass.path}")
     private String[] cipherKeyPassPath;
-    @Value("${ega.publickeypass.url}")
+    @Value("${ega.sharedpass.path}")
+    private String sharedKeyPath;
+    @Value("${ega.publickey.url}")
     private String publicKeyUrl;
+    @Value("${ega.legacy.path}")
+    private String egaLegacyPath;
 
     @Bean
     public MyCipherConfig MyCipherConfig() {
-        return new MyCipherConfig(cipherKeyPath, cipherKeyPassPath, publicKeyUrl);
+        return new MyCipherConfig(cipherKeyPath, 
+                                  cipherKeyPassPath,
+                                  sharedKeyPath,
+                                  publicKeyUrl,
+                                  egaLegacyPath);
     }
 
     @Bean

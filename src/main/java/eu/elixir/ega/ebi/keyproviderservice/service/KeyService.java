@@ -28,11 +28,13 @@ public interface KeyService {
 
     String getFileKey(String fileId);
 
-    PGPPrivateKey getPrivateKey(String keyType, String keyId);
+    PGPPrivateKey getPrivateKey(String keyId);
 
-    KeyPath getPrivateKeyPath(String keyType, String keyId);
+    KeyPath getPrivateKeyPath(String keyId);
 
-    PGPPublicKey getPublicKeyFromPrivate(String keyType, String keyId);
+    String getPrivateKeyString(String keyId);
+
+    PGPPublicKey getPublicKeyFromPrivate(String keyId);
 
     String getPublicKey(String keyType, String keyId);
 

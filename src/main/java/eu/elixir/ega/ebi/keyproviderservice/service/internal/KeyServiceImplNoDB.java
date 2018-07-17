@@ -17,8 +17,6 @@ package eu.elixir.ega.ebi.keyproviderservice.service.internal;
 
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import eu.elixir.ega.ebi.keyproviderservice.config.MyCipherConfig;
-import eu.elixir.ega.ebi.keyproviderservice.domain.entity.EncryptionKey;
-import eu.elixir.ega.ebi.keyproviderservice.domain.repository.EncryptionKeyRepository;
 import eu.elixir.ega.ebi.keyproviderservice.dto.KeyPath;
 import eu.elixir.ega.ebi.keyproviderservice.service.KeyService;
 import org.bouncycastle.openpgp.PGPPrivateKey;
@@ -35,22 +33,18 @@ import org.springframework.context.annotation.Profile;
  * @author asenf
  */
 @Service
-@Profile("db")
+@Profile("!db")
 @EnableDiscoveryClient
-public class KeyServiceImpl implements KeyService {
+public class KeyServiceImplNoDB implements KeyService {
 
     @Autowired
     private MyCipherConfig myCipherConfig; // Private GPG Key(s)
-
-    @Autowired
-    private EncryptionKeyRepository encryptionKeyRepository; // Per-File AES Keys
 
     @Override
     @HystrixCommand
     @ResponseBody
     public String getFileKey(String id) {
-        EncryptionKey findById = encryptionKeyRepository.findById(id);
-        return findById.getEncryptionKey();
+        return myCipherConfig.getFileKey(id);
     }
 
     @Override

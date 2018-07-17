@@ -34,36 +34,59 @@ public class KeyController {
     @Autowired
     private KeyService keyService;
 
+    /*
+     * Getting the AES key for a specific file
+     */
     @GetMapping(value = "/filekeys/{fileId}")
     @ResponseBody
     public String getFileKey(@PathVariable String fileId) {
         return keyService.getFileKey(fileId);
     }
 
-    @GetMapping(value = "/retrieve/{keyType}/{keyId}/public/user")
+    /*
+     * Getting a Public Key 
+     * - Getting our own Public Key
+     * - Getting a User Public Key, by ID or by Email
+     */
+    @GetMapping(value = "/retrieve/{keyId}/public")
     @ResponseBody
-    public String getPublicKey(@PathVariable String keyType, @PathVariable String keyId) {
+    public PGPPublicKey getPublicKeyFromPrivate(@PathVariable String keyId) {
+        return keyService.getPublicKeyFromPrivate(keyId);
+    }
+
+    @GetMapping(value = "/retrieve/{keyId}/public/{keyType}")
+    @ResponseBody
+    public String getPublicKey(@PathVariable String keyId, @PathVariable String keyType) {
         return keyService.getPublicKey(keyType, keyId);
     }
 
-    @GetMapping(value = "/retrieve/{keyType}/{keyId}/public")
+    /*
+     * Getting a Private Key 
+     * - Getting the instantiated Object (/object)
+     * - Getting the paths to the ASCII Armoured Key and Passphrase (/path)
+     * - Getting a re-Armoured String of the Key (/kay)
+     */
+    @GetMapping(value = "/retrieve/{keyId}/private/object")
     @ResponseBody
-    public PGPPublicKey getPublicKeyFromPrivate(@PathVariable String keyType, @PathVariable String keyId) {
-        return keyService.getPublicKeyFromPrivate(keyType, keyId);
+    public PGPPrivateKey getPrivateKey(@PathVariable String keyId) {
+        return keyService.getPrivateKey(keyId);
     }
 
-    @GetMapping(value = "/retrieve/{keyType}/{keyId}/private")
+    @GetMapping(value = "/retrieve/{keyId}/private/path")
     @ResponseBody
-    public PGPPrivateKey getPrivateKey(@PathVariable String keyType, @PathVariable String keyId) {
-        return keyService.getPrivateKey(keyType, keyId);
+    public KeyPath getPrivateKeyPath(@PathVariable String keyId) {
+        return keyService.getPrivateKeyPath(keyId);
     }
 
-    @GetMapping(value = "/retrieve/{keyType}/{keyId}/private/path")
+    @GetMapping(value = "/retrieve/{keyId}/private/key")
     @ResponseBody
-    public KeyPath getPrivateKeyPath(@PathVariable String keyType, @PathVariable String keyId) {
-        return keyService.getPrivateKeyPath(keyType, keyId);
+    public String getPrivateKeyString(@PathVariable String keyId) {
+        return keyService.getPrivateKeyString(keyId);
     }
-
+    
+    /*
+     * Return all current Key IDs
+     */
     @GetMapping(value = "/retrieve/{keyType}/ids")
     @ResponseBody
     public Set<Long> getPublicKey(@PathVariable String keyType) {

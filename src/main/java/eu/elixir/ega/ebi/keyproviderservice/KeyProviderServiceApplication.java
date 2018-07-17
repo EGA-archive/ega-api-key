@@ -32,12 +32,13 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 
 @SpringBootApplication
 @EnableCaching
 @EnableCircuitBreaker
 @EnableHystrix
-@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
+@EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class, HibernateJpaAutoConfiguration.class})
 @EnableSwagger2
 @EnableDiscoveryClient
 public class KeyProviderServiceApplication {

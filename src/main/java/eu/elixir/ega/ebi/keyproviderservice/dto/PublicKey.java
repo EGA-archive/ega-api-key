@@ -21,7 +21,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- *
  * @author asenf
  */
 @NoArgsConstructor
@@ -37,5 +36,5 @@ public class PublicKey {
     String algorithm;
     String keySize;
     String publicKeyArmored;
-    
+
 }

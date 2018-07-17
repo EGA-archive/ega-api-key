@@ -17,18 +17,8 @@ package eu.elixir.ega.ebi.keyproviderservice.config;
 
 import eu.elixir.ega.ebi.keyproviderservice.dto.KeyPath;
 import eu.elixir.ega.ebi.keyproviderservice.dto.PublicKey;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import org.bouncycastle.openpgp.*;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.bouncycastle.bcpg.ArmoredInputStream;
+import org.bouncycastle.openpgp.*;
 import org.bouncycastle.openpgp.operator.PBESecretKeyDecryptor;
 import org.bouncycastle.openpgp.operator.PGPDigestCalculatorProvider;
 import org.bouncycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator;
@@ -38,40 +28,45 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * @author asenf
  */
 public class MyCipherConfig {
-    
+
     @Autowired
     private RestTemplate restTemplate;
 
     // Actual Key objects (not sure if this is necessary)
-    private HashMap<Long, PGPPrivateKey>  pgpPriv;
-    
+    private HashMap<Long, PGPPrivateKey> pgpPrivateKeys = new HashMap<>();
+
     // Paths
-    private HashMap<Long, KeyPath> keyPaths;
-    
+    private HashMap<Long, KeyPath> keyPaths = new HashMap<>();
+
     // Public Key URL
     // https://github.com/mailvelope/keyserver/blob/master/README.md
     private String publicKeyUrl;
-    
+
     // Load (1) Private Key
     public MyCipherConfig(String[] keyPath, String[] keyPassPath, String publicKeyUrl) {
         this.publicKeyUrl = publicKeyUrl;
-        
-        if (keyPath==null) return;
-        
-        // Instantiate Data Structures
-        pgpPriv = new HashMap<>();
-        keyPaths = new HashMap<>();
+
+        if (keyPath == null) {
+            return;
+        }
 
         // Get Key ID and store both Key paths and Key objects in a Hash Map
-        for (int i=0; i< keyPath.length; i++) {
+        for (int i = 0; i < keyPath.length; i++) {
             try {
-                PGPPrivateKey pgpPriv_ = extractKey(readFileAsString(keyPath[i]), readFileAsString(keyPassPath[i]));
-                long keyId = pgpPriv_.getKeyID();
-                pgpPriv.put(keyId, pgpPriv_);
+                PGPPrivateKey pgpPrivateKey = extractKey(readFileAsString(keyPath[i]), readFileAsString(keyPassPath[i]));
+                long keyId = pgpPrivateKey.getKeyID();
+                pgpPrivateKeys.put(keyId, pgpPrivateKey);
                 keyPaths.put(keyId, new KeyPath(keyPath[i], keyPassPath[i]));
             } catch (IOException ex) {
                 Logger.getLogger(MyCipherConfig.class.getName()).log(Level.SEVERE, null, ex);
@@ -83,26 +78,27 @@ public class MyCipherConfig {
      * Accessors - Private Key, and Paths - Used by REST endpoint
      */
     public PGPPrivateKey getPrivateKey(Long keyId) {
-        return this.pgpPriv.get(keyId);
-    }   
+        return this.pgpPrivateKeys.get(keyId);
+    }
+
     public PGPPublicKey getPublicKey(Long keyId) {
         PGPPublicKey key = null;
         try {
-            key = new PGPPublicKey(this.pgpPriv.get(keyId).getPublicKeyPacket(), new JcaKeyFingerprintCalculator());
+            key = new PGPPublicKey(this.pgpPrivateKeys.get(keyId).getPublicKeyPacket(), new JcaKeyFingerprintCalculator());
         } catch (PGPException ex) {
             Logger.getLogger(MyCipherConfig.class.getName()).log(Level.SEVERE, null, ex);
         }
         return key;
     }
-    
+
     public KeyPath getKeyPaths(Long keyId) {
         return this.keyPaths.get(keyId);
     }
-    
+
     public Set<Long> getKeyIDs() {
-        return this.pgpPriv.keySet();
+        return this.pgpPrivateKeys.keySet();
     }
-    
+
     // https://github.com/mailvelope/keyserver/blob/master/README.md
     public String getPublicKeyById(String id) {
         ResponseEntity<PublicKey> publicKey = restTemplate.getForEntity(this.publicKeyUrl + "?id=" + id, PublicKey.class);
@@ -114,36 +110,35 @@ public class MyCipherConfig {
         ResponseEntity<PublicKey> publicKey = restTemplate.getForEntity(this.publicKeyUrl + "?email=" + email, PublicKey.class);
         return publicKey.getBody().getPublicKeyArmored();
     }
-    
+
     /*
      * Utility Functions
      */
     public PGPPrivateKey extractKey(String sKey, String sPass) {
         PGPPrivateKey key = null;
-        
+
         try {
             PGPSecretKey secretKey = getSecretKey(sKey);
 
             // Extract Private Key from Secret Key
             PGPDigestCalculatorProvider digestCalc = new JcaPGPDigestCalculatorProviderBuilder().build();
-            PBESecretKeyDecryptor decryptor = new JcePBESecretKeyDecryptorBuilder(digestCalc)
-                .build(sPass.toCharArray());
+            PBESecretKeyDecryptor decryptor = new JcePBESecretKeyDecryptorBuilder(digestCalc).build(sPass.toCharArray());
 
             key = secretKey.extractPrivateKey(decryptor);
         } catch (IOException | PGPException ex) {
             System.out.println(ex.toString());
         }
-        
+
         return key;
     }
-    
+
     // Return the contents of a file as String
-    public String readFileAsString(String filePath) throws java.io.IOException{
-        StringBuffer fileData = new StringBuffer(1000);
+    public String readFileAsString(String filePath) throws java.io.IOException {
+        StringBuilder fileData = new StringBuilder(1000);
         BufferedReader reader = new BufferedReader(new FileReader(filePath));
         char[] buf = new char[1024];
-        int numRead=0;
-        while((numRead=reader.read(buf)) != -1){
+        int numRead;
+        while ((numRead = reader.read(buf)) != -1) {
             String readData = String.valueOf(buf, 0, numRead);
             fileData.append(readData);
             buf = new char[1024];
@@ -151,21 +146,20 @@ public class MyCipherConfig {
         reader.close();
         return fileData.toString();
     }
-    
+
     /*
-     * Helper Functins
+     * Helper Functions
      */
     // Extract Secret Key from File
     private PGPSecretKey getSecretKey(String privateKeyData) throws IOException, PGPException {
-        PGPPrivateKey privKey = null;
-        try (InputStream privStream = new ArmoredInputStream(new ByteArrayInputStream(privateKeyData.getBytes("UTF-8")))) {
-            PGPSecretKeyRingCollection pgpSec = new PGPSecretKeyRingCollection(PGPUtil.getDecoderStream(privStream), new JcaKeyFingerprintCalculator());
-            Iterator keyRingIter = pgpSec.getKeyRings();
-            while (keyRingIter.hasNext()) {
-                PGPSecretKeyRing keyRing = (PGPSecretKeyRing)keyRingIter.next();
-                Iterator keyIter = keyRing.getSecretKeys();
-                while (keyIter.hasNext()) {
-                    PGPSecretKey key = (PGPSecretKey)keyIter.next();
+        try (InputStream privateKeyStream = new ArmoredInputStream(new ByteArrayInputStream(privateKeyData.getBytes("UTF-8")))) {
+            PGPSecretKeyRingCollection pgpSec = new PGPSecretKeyRingCollection(PGPUtil.getDecoderStream(privateKeyStream), new JcaKeyFingerprintCalculator());
+            Iterator keyRingIterator = pgpSec.getKeyRings();
+            while (keyRingIterator.hasNext()) {
+                PGPSecretKeyRing keyRing = (PGPSecretKeyRing) keyRingIterator.next();
+                Iterator keyIterator = keyRing.getSecretKeys();
+                while (keyIterator.hasNext()) {
+                    PGPSecretKey key = (PGPSecretKey) keyIterator.next();
 
                     if (key.isSigningKey()) {
                         return key;

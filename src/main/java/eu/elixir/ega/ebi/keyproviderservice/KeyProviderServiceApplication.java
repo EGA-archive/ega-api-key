@@ -16,8 +16,6 @@
 package eu.elixir.ega.ebi.keyproviderservice;
 
 import com.google.common.cache.CacheBuilder;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -32,6 +30,9 @@ import org.springframework.cloud.netflix.hystrix.EnableHystrix;
 import org.springframework.context.annotation.Bean;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
 @SpringBootApplication
 @EnableCaching
 @EnableCircuitBreaker
@@ -39,20 +40,21 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @EnableAutoConfiguration(exclude = {DataSourceAutoConfiguration.class})
 @EnableSwagger2
 @EnableDiscoveryClient
-public class KeyproviderserviceApplication {
+public class KeyProviderServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(KeyproviderserviceApplication.class, args);
+        SpringApplication.run(KeyProviderServiceApplication.class, args);
     }
 
-        @Bean
-        public CacheManager cacheManager() {
-            SimpleCacheManager simpleCacheManager = new SimpleCacheManager();
-            GuavaCache byFileId = new GuavaCache("byId", CacheBuilder.newBuilder()
-                    .expireAfterAccess(24, TimeUnit.HOURS)
-                    .build());
+    @Bean
+    public CacheManager cacheManager() {
+        SimpleCacheManager simpleCacheManager = new SimpleCacheManager();
+        GuavaCache byFileId = new GuavaCache("byId", CacheBuilder.newBuilder()
+                .expireAfterAccess(24, TimeUnit.HOURS)
+                .build());
 
-            simpleCacheManager.setCaches(Arrays.asList(byFileId));
-            return simpleCacheManager;
-        }
+        simpleCacheManager.setCaches(Collections.singletonList(byFileId));
+        return simpleCacheManager;
+    }
+
 }

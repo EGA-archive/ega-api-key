@@ -21,13 +21,12 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
 /**
- *
  * @author asenf
  */
 public interface EncryptionKeyRepository extends CrudRepository<EncryptionKey, Integer> {
-    
-    @Cacheable(cacheNames="byId")
-    public EncryptionKey findById(@Param("id") String id);
-    
+
+    @Cacheable(cacheNames = "byId")
+    EncryptionKey findById(@Param("id") String id);
+
 }
  

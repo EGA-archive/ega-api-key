@@ -32,19 +32,6 @@ import java.lang.management.ManagementFactory;
 @RequestMapping("/stats")
 public class StatsController {
 
-    @GetMapping(value = "/load")
-    public String get() {
-
-        String load;
-        try {
-            load = String.valueOf(getProcessCpuLoad());
-        } catch (Exception ex) {
-            load = "Error";
-        }
-
-        return load;
-    }
-
     // Obtain local CPU Load (used by EBI Load Balancer as Heartbeat)
     private static double getProcessCpuLoad() throws Exception {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
@@ -63,4 +50,17 @@ public class StatsController {
         }
         return ((int) (value * 1000) / 10.0);
     }
+
+    @GetMapping(value = "/load")
+    public String get() {
+        String load;
+        try {
+            load = String.valueOf(getProcessCpuLoad());
+        } catch (Exception ex) {
+            load = "Error";
+        }
+
+        return load;
+    }
+
 }

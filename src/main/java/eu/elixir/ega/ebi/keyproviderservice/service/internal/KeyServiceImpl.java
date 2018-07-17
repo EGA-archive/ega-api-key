@@ -21,13 +21,14 @@ import eu.elixir.ega.ebi.keyproviderservice.domain.entity.EncryptionKey;
 import eu.elixir.ega.ebi.keyproviderservice.domain.repository.EncryptionKeyRepository;
 import eu.elixir.ega.ebi.keyproviderservice.dto.KeyPath;
 import eu.elixir.ega.ebi.keyproviderservice.service.KeyService;
-import java.util.Set;
 import org.bouncycastle.openpgp.PGPPrivateKey;
 import org.bouncycastle.openpgp.PGPPublicKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.Set;
 
 /**
  * @author asenf
@@ -46,28 +47,23 @@ public class KeyServiceImpl implements KeyService {
     @HystrixCommand
     @ResponseBody
     public String getFileKey(String id) {
-        String key = null;
-        
         EncryptionKey findById = encryptionKeyRepository.findById(id);
-        key = findById.getEncryptionKey();
-        
-        return key;
+        return findById.getEncryptionKey();
     }
-    
+
     @Override
     @HystrixCommand
     @ResponseBody
     public PGPPrivateKey getPrivateKey(String keyType, String keyId) {
-        long lKeyId = Long.parseLong(keyId);     
+        long lKeyId = Long.parseLong(keyId);
         return myCipherConfig.getPrivateKey(lKeyId);
     }
-    
+
     @Override
     @HystrixCommand
     @ResponseBody
     public KeyPath getPrivateKeyPath(String keyType, String keyId) {
         long lKeyId = Long.parseLong(keyId);
-        
         return myCipherConfig.getKeyPaths(lKeyId);
     }
 
@@ -80,7 +76,6 @@ public class KeyServiceImpl implements KeyService {
         } else if (keyType.equalsIgnoreCase("email")) {
             return myCipherConfig.getPublicKeyByEmail(keyId);
         }
-        
         return null;
     }
 
@@ -94,7 +89,7 @@ public class KeyServiceImpl implements KeyService {
     @Override
     @HystrixCommand
     @ResponseBody
-    public Set<Long> getKeyIDs(String key_type) {
+    public Set<Long> getKeyIDs(String keyType) {
         return this.myCipherConfig.getKeyIDs();
     }
 

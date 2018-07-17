@@ -16,9 +16,10 @@
 package eu.elixir.ega.ebi.keyproviderservice.service;
 
 import eu.elixir.ega.ebi.keyproviderservice.dto.KeyPath;
-import java.util.Set;
 import org.bouncycastle.openpgp.PGPPrivateKey;
 import org.bouncycastle.openpgp.PGPPublicKey;
+
+import java.util.Set;
 
 /**
  * @author asenf
@@ -28,10 +29,13 @@ public interface KeyService {
     String getFileKey(String fileId);
 
     PGPPrivateKey getPrivateKey(String keyType, String keyId);
+
     KeyPath getPrivateKeyPath(String keyType, String keyId);
 
     PGPPublicKey getPublicKeyFromPrivate(String keyType, String keyId);
+
     String getPublicKey(String keyType, String keyId);
 
-    Set<Long> getKeyIDs(String key_type);
+    Set<Long> getKeyIDs(String keyType);
+
 }

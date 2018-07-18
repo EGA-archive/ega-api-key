@@ -64,7 +64,7 @@ public class KeyController {
      * Getting a Private Key 
      * - Getting the instantiated Object (/object)
      * - Getting the paths to the ASCII Armoured Key and Passphrase (/path)
-     * - Getting a re-Armoured String of the Key (/kay)
+     * - Getting a re-Armoured String of the Key (/key)
      */
     @GetMapping(value = "/retrieve/{keyId}/private/object")
     @ResponseBody

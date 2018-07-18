@@ -39,10 +39,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.tomcat.util.http.fileupload.util.Streams;
 import org.bouncycastle.bcpg.ArmoredOutputStream;
-import org.bouncycastle.bcpg.BCPGKey;
 import org.bouncycastle.bcpg.HashAlgorithmTags;
 import org.bouncycastle.openpgp.operator.KeyFingerPrintCalculator;
-import org.bouncycastle.openpgp.operator.PBESecretKeyEncryptor;
 import org.bouncycastle.openpgp.operator.PGPDigestCalculator;
 import org.bouncycastle.openpgp.operator.jcajce.JcaPGPContentSignerBuilder;
 import org.bouncycastle.openpgp.operator.jcajce.JcePBESecretKeyEncryptorBuilder;
@@ -88,14 +86,17 @@ public class MyCipherConfig {
         // Get Key ID and store both Key paths and Key objects in a Hash Map
         for (int i = 0; i < keyPath.length; i++) {
             try {
-                PGPPrivateKey pgpPrivateKey = extractKey(readFileAsString(keyPath[i]), readFileAsString(keyPassPath[i]));
+                String keyAsString = readFileAsString(keyPath[i]);
+                PGPPublicKey pgpPublicKey = extractPublicKey(keyAsString);
+                
+                PGPPrivateKey pgpPrivateKey = extractKey(keyAsString, readFileAsString(keyPassPath[i]));
                 long keyId = pgpPrivateKey.getKeyID();
                 // Store the Key Object
                 pgpPrivateKeys.put(keyId, pgpPrivateKey);
                 // Store the set of Paths to Key and Passphrase
                 keyPaths.put(keyId, new KeyPath(keyPath[i], keyPassPath[i]));
                 // Store Re-Armoured Key String
-                String reArmouredKey = reArmourKey(pgpPrivateKey);
+                String reArmouredKey = reArmourKey(pgpPublicKey, pgpPrivateKey);
                 armouredKey.put(keyId, reArmouredKey);
             } catch (IOException ex) {
                 Logger.getLogger(MyCipherConfig.class.getName()).log(Level.SEVERE, null, ex);
@@ -182,6 +183,16 @@ public class MyCipherConfig {
     /*
      * Utility Functions
      */
+    private PGPPublicKey extractPublicKey(String sKey) {
+        try {
+            PGPSecretKey secretKey = getSecretKey(sKey);
+            return secretKey.getPublicKey();
+        } catch (IOException | PGPException ex) {
+            System.out.println(ex.toString());
+        }
+       return null;
+    }
+    
     public PGPPrivateKey extractKey(String sKey, String sPass) {
         PGPPrivateKey key = null;
 
@@ -246,27 +257,25 @@ public class MyCipherConfig {
         return count;
     }
 
-    // Needs work...
-    
-    // Current: produces -----BEGIN PGP MESSAGE-----
-    private String reArmourKey(PGPPrivateKey pgpPrivateKey) {
+    private String reArmourKey(PGPPublicKey pgpPub, PGPPrivateKey pgpPriv) {
         String key = null;
         
-        
-        BCPGKey privateKeyDataPacket = pgpPrivateKey.getPrivateKeyDataPacket();
-        byte[] encoded = privateKeyDataPacket.getEncoded();
-        
-        ByteArrayInputStream bais = new ByteArrayInputStream(encoded);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ArmoredOutputStream armoredOutputStream = new ArmoredOutputStream(baos);
-        
         try {
+            PGPSecretKeyRing secRing = newSecKey(pgpPub, pgpPriv);
+            byte[] encoded = secRing.getEncoded();
+
+            ByteArrayInputStream bais = new ByteArrayInputStream(encoded);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ArmoredOutputStream armoredOutputStream = new ArmoredOutputStream(baos);
+        
             Streams.copy(bais, armoredOutputStream, true);
             armoredOutputStream.flush();
             armoredOutputStream.close();
             
             key = baos.toString();
         } catch (IOException ex) {
+            Logger.getLogger(MyCipherConfig.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (Exception ex) {
             Logger.getLogger(MyCipherConfig.class.getName()).log(Level.SEVERE, null, ex);
         }
         

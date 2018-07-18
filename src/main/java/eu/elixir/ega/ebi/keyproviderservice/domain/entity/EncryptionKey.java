@@ -38,7 +38,7 @@ public class EncryptionKey implements Serializable {
     @Id
     @Column(name = "encryption_key_id", insertable = false, updatable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Size(max = 128)
     @Column(name = "alias", insertable = false, updatable = false, length = 256)
@@ -48,9 +48,5 @@ public class EncryptionKey implements Serializable {
     @Type(type = "org.hibernate.type.TextType")
     @Column(name = "encryption_key", insertable = false, updatable = false, length = 256)
     private String encryptionKey;
-
-    @Size(max = 128)
-    @Column(name = "key_format", insertable = false, updatable = false, length = 256)
-    private String keyFormat;
 
 }

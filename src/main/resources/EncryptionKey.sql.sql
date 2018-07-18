@@ -19,15 +19,7 @@
  */
 
 CREATE TABLE encryption_key (
-	encryption_key_id serial NOT NULL,
+	encryption_key_id bigserial NOT NULL,
 	alias varchar(128) NOT NULL,
 	encryption_key text NOT NULL,
-	key_format varchar(128) NOT NULL,
-	CONSTRAINT encryption_key_alias_key UNIQUE (alias),
-	CONSTRAINT encryption_key_encryption_key_key UNIQUE (encryption_key),
-	CONSTRAINT encryption_key_pkey PRIMARY KEY (encryption_key_id),
-	CONSTRAINT encryption_key_key_format_fkey FOREIGN KEY (key_format) REFERENCES key_formats_cv(key_format)
-)
-WITH (
-	OIDS=FALSE
 ) ;

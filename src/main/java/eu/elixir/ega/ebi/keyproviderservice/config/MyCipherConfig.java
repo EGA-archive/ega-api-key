@@ -252,8 +252,7 @@ public class MyCipherConfig {
     private int readCharArray(char[] buf, String path) throws FileNotFoundException, IOException {
         FileReader fr = new FileReader(path);
         int count;
-        char chrs[] = new char[80];
-        count = fr.read(chrs);
+        count = fr.read(buf);
         return count;
     }
 

@@ -83,6 +83,17 @@ public class MyCipherConfig {
             return;
         }
 
+        // Shared Key between Services (implemetation using char array)
+        if (sharedKeyPath!=null && sharedKeyPath.length()>0) {
+            char[] buf = new char[128]; // limit password length to 128 characters
+            try {
+                int cnt = readCharArray(buf, sharedKeyPath);
+                this.sharedKey = new GuardedString( Arrays.copyOfRange(buf, 0, cnt) );
+            } catch (IOException ex) {
+                Logger.getLogger(MyCipherConfig.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+
         // Get Key ID and store both Key paths and Key objects in a Hash Map
         for (int i = 0; i < keyPath.length; i++) {
             try {
@@ -98,17 +109,6 @@ public class MyCipherConfig {
                 // Store Re-Armoured Key String
                 String reArmouredKey = reArmourKey(pgpPublicKey, pgpPrivateKey);
                 armouredKey.put(keyId, reArmouredKey);
-            } catch (IOException ex) {
-                Logger.getLogger(MyCipherConfig.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        // Shared Key between Services (implemetation using char array)
-        if (sharedKeyPath!=null && sharedKeyPath.length()>0) {
-            char[] buf = new char[128]; // limit password length to 128 characters
-            try {
-                int cnt = readCharArray(buf, sharedKeyPath);
-                this.sharedKey = new GuardedString( Arrays.copyOfRange(buf, 0, cnt) );
             } catch (IOException ex) {
                 Logger.getLogger(MyCipherConfig.class.getName()).log(Level.SEVERE, null, ex);
             }

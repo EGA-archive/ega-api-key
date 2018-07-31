@@ -86,15 +86,15 @@ public class MyCipherConfig {
         // Get Key ID and store both Key paths and Key objects in a Hash Map
         for (int i = 0; i < keyPath.length; i++) {
             try {
-                String keyAsString = readFileAsString(keyPath[i]);
+                String keyAsString = readFileAsString(keyPath[i]).trim();
                 PGPPublicKey pgpPublicKey = extractPublicKey(keyAsString);
                 
-                PGPPrivateKey pgpPrivateKey = extractKey(keyAsString, readFileAsString(keyPassPath[i]));
+                PGPPrivateKey pgpPrivateKey = extractKey(keyAsString, readFileAsString(keyPassPath[i]).trim());
                 long keyId = pgpPrivateKey.getKeyID();
                 // Store the Key Object
                 pgpPrivateKeys.put(keyId, pgpPrivateKey);
                 // Store the set of Paths to Key and Passphrase
-                keyPaths.put(keyId, new KeyPath(keyPath[i], keyPassPath[i]));
+                keyPaths.put(keyId, new KeyPath(keyPath[i], keyPassPath[i].trim()));
                 // Store Re-Armoured Key String
                 String reArmouredKey = reArmourKey(pgpPublicKey, pgpPrivateKey);
                 armouredKey.put(keyId, reArmouredKey);

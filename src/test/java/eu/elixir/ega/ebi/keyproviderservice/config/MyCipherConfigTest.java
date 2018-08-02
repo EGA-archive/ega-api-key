@@ -113,12 +113,12 @@ public class MyCipherConfigTest {
 
     /**
      * Test {@link MyCipherConfig#readFileAsString(String)}. Verify the
-     * pgpPrivateKey.
+     * pgpPrivateKey id.
      */
     @Test
     public void testExtractKey() throws IOException {
         PGPPrivateKey pgpPrivateKey = myCipherConfig.extractKey(getPrivateKey(), getPassphrase());
-        assertNotNull(pgpPrivateKey);
+        assertThat(pgpPrivateKey.getKeyID(), equalTo(KEY_ID));
     }
 
     /**

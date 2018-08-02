@@ -112,7 +112,7 @@ public class MyCipherConfigTest {
     }
 
     /**
-     * Test {@link MyCipherConfig#readFileAsString(String)}. Verify the
+     * Test {@link MyCipherConfig#extractKey(String)}. Verify the
      * pgpPrivateKey id.
      */
     @Test
